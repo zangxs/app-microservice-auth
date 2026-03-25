@@ -7,5 +7,5 @@ import java.io.Serializable;
 @Data
 public class SignUpResponse implements Serializable {
 
-    private Long id;
+    private String username;
 }

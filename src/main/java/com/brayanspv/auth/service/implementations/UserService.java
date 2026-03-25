@@ -16,8 +16,7 @@ import reactor.core.publisher.Mono;
 @Log4j2
 public class UserService implements IUserService {
 
-    IUserRepository userRepository;
-
+    private final IUserRepository userRepository;
     public UserService(IUserRepository userRepository) {
         this.userRepository = userRepository;
     }
@@ -36,9 +35,10 @@ public class UserService implements IUserService {
             log.info("HashedPassword: {}", userEntity.getPassword());
 
             userRepository.save(userEntity);
-
+            log.info("User saved");
+            log.info("user: {}", userEntity);
             SignUpResponse response = new SignUpResponse();
-            response.setId(userEntity.getId());
+            response.setUsername(userEntity.getUsername());
             return Mono.just(response);
         });
     }
