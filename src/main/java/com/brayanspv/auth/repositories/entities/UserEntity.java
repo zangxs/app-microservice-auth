@@ -1,6 +1,6 @@
 package com.brayanspv.auth.repositories.entities;
 
-import javax.persistence.Entity;
+import jakarta.persistence.Entity;
 import lombok.Data;
 
 @Entity
