@@ -13,7 +13,6 @@ import reactor.core.publisher.Mono;
 @Log4j2
 public class UserController implements IUserController {
 
-
     private IUserService userService;
 
     public UserController(IUserService userService) {
@@ -23,8 +22,8 @@ public class UserController implements IUserController {
     @Override
     @PostMapping(path = "signUp")
     public Mono<ResponseEntity> signUp(SignUpRequest request) {
-        return Mono.just(request).flatMap(currentRequest -> {
-
-        })
+        return userService.signUp(request)
+                .map(signUpResponse -> ResponseEntity.ok(signUpResponse))
+                .onErrorResume(error -> ResponseEntity.badRequest().body("Error al registrar el usuario"));
     }
 }
