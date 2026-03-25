@@ -24,6 +24,6 @@ public class UserController implements IUserController {
     public Mono<ResponseEntity> signUp(SignUpRequest request) {
         return userService.signUp(request)
                 .map(signUpResponse -> ResponseEntity.ok(signUpResponse))
-                .onErrorResume(error -> ResponseEntity.badRequest().body("Error al registrar el usuario"));
+                .onErrorResume(error -> Mono.just(ResponseEntity.badRequest().body("Error al registrar el usuario")));
     }
 }
