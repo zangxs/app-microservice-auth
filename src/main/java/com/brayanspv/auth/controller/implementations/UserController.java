@@ -2,6 +2,7 @@ package com.brayanspv.auth.controller.implementations;
 
 import com.brayanspv.auth.controller.contracts.IUserController;
 import com.brayanspv.auth.model.request.SignUpRequest;
+import com.brayanspv.auth.model.response.SignUpResponse;
 import com.brayanspv.auth.service.contracts.IUserService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.ResponseEntity;
@@ -21,9 +22,9 @@ public class UserController implements IUserController {
 
     @Override
     @PostMapping(path = "signUp")
-    public Mono<ResponseEntity> signUp(SignUpRequest request) {
+    public Mono<ResponseEntity<SignUpResponse>> signUp(SignUpRequest request) {
         return userService.signUp(request)
                 .map(signUpResponse -> ResponseEntity.ok(signUpResponse))
-                .onErrorResume(error -> Mono.just(ResponseEntity.badRequest().body("Error al registrar el usuario")));
+                .onErrorResume(error -> Mono.error(error));
     }
 }

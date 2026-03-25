@@ -1,6 +1,5 @@
 package com.brayanspv.auth.handler;
 
-import com.brayanspv.auth.model.ExampleModel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
