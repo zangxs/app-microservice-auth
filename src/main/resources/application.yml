@@ -1,9 +1,22 @@
 spring:
   application:
     name: app-microservice-auth
+  webflux:
+    base-path: /app-microservice-auth
+  datasource:
+    url: jdbc:postgresql://localhost:5432/authdb
+    username: brayanpv
+    password: brayanpv
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
 server:
-  port: 8080
+  port: 8000
 
 management:
   endpoints:
@@ -13,3 +26,7 @@ management:
   endpoint:
     health:
       show-details: always
+
+
+app:
+  aesKey: ${KEY_VALUE:e1144e882fa157190013dd2238d5dfa7}

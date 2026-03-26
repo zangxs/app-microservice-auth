@@ -6,10 +6,11 @@ import lombok.Data;
 
 @Entity
 @Data
-@Table(name = "USER")
+@Table(name = "AU_USER")
 public class UserEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_id_gen")
+    @SequenceGenerator(name = "user_id_gen", sequenceName = "user_id_seq", allocationSize = 1)
     @Column(unique = true, nullable = false, name = "id")
     private Long id;
     @Column(unique = true, nullable = false, name = "username")

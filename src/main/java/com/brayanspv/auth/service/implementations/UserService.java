@@ -25,7 +25,7 @@ public class UserService implements IUserService {
     public Mono<SignUpResponse> signUp(SignUpRequest request) {
         return Mono.just(new SignUpResponse()).flatMap(signUpResponse -> {
             log.info("Sign up request received");
-
+            log.info("request received: {}",request.toString());
             UserEntity userEntity = new UserEntity();
             userEntity.setEmail(request.getEmail());
             userEntity.setPassword(PasswordHelper.createPassword(request.getPassword()));
