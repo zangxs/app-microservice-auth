@@ -28,7 +28,7 @@ public class GlobalExceptionHandler {
         ApiResponse apiResponse = ApiResponse.builder()
                 .dateTime(System.currentTimeMillis())
                 .code(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .data(e.getMessage())
+                .data("DataIntegrityViolationException")
                 .build();
         
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(apiResponse);
