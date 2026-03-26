@@ -25,7 +25,7 @@ jobs:
         run: mvn site
 
       - name: Publicar informe en GitHub Actions
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@3
         with:
           name: cobertura-jacoco.xml
           path: target/site/jacoco/index.html
