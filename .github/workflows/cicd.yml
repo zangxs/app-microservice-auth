@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Instalar dependencias con Maven
         run: mvn dependency:resolve
@@ -25,9 +25,9 @@ jobs:
         run: mvn site
 
       - name: Publicar informe en GitHub Actions
-        uses: actions/upload-artifact@3
+        uses: actions/upload-artifact@v4
         with:
-          name: cobertura-jacoco.xml
+          name: cobertura-jacoco
           path: target/site/jacoco/index.html
 
   #sonar:
