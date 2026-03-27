@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: app-microservice-auth
+  webflux:
+    base-path: /app-microservice-auth
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/authdb
+    username: brayanpv
+    password: brayanpv
+
+server:
+  port: 8000
+
+logging:
+  level:
+    ROOT: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+jwt:
+  secret: ${JWT_KEY:MsUEV8IkLNB7NkFB0iVHtaCNrn98CTzYIz/5w4te3J0=}
+  expiration: 86400000  # 24 horas en milisegundos
