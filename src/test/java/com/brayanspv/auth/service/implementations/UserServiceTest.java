@@ -13,6 +13,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -27,6 +28,8 @@ class UserServiceTest {
 
     @Mock
     private IUserRepository userRepository;
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     private final Gson gson = new Gson();
 
@@ -41,7 +44,7 @@ class UserServiceTest {
         // Mock the save operation to return a Mono.just with an id assigned
         when(userRepository.save(any(UserEntity.class))).thenReturn(userEntity);
 
-        UserService userService = new UserService(userRepository);
+        UserService userService = new UserService(userRepository, passwordEncoder);
         StepVerifier.create(userService.signUp(request))
                 .expectNextMatches(signUpResponse ->  signUpResponse.getUsername().equals(request.getUsername()))
                 .verifyComplete();
