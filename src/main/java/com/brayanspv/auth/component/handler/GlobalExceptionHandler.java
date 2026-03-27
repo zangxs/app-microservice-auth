@@ -1,6 +1,5 @@
 package com.brayanspv.auth.component.handler;
 
-import com.brayanspv.auth.model.response.generic.ApiError;
 import com.brayanspv.auth.model.response.generic.ApiResponse;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -15,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @ControllerAdvice
 @Log4j2

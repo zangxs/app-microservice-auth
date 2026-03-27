@@ -19,7 +19,7 @@ import java.util.Date;
 @Log4j2
 public class UserController implements IUserController {
 
-    private IUserService userService;
+    private final IUserService userService;
 
     public UserController(IUserService userService) {
         this.userService = userService;
