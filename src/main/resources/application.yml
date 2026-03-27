@@ -30,7 +30,3 @@ management:
   endpoint:
     health:
       show-details: always
-
-
-app:
-  aesKey: ${KEY_VALUE:e1144e882fa157190013dd2238d5dfa7}
