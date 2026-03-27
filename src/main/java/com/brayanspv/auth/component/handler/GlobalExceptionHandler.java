@@ -1,5 +1,6 @@
 package com.brayanspv.auth.component.handler;
 
+import com.brayanspv.auth.component.exception.InvalidLoginException;
 import com.brayanspv.auth.model.response.generic.ApiResponse;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -32,6 +33,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(apiResponse);
     }
 
+    @ExceptionHandler(value = InvalidLoginException.class)
+    public ResponseEntity<?> handleInvalidLoginException(InvalidLoginException e) {
+        log.error("error in handler handleInvalidLoginException: {}", e.getMessage());
+        ApiResponse apiResponse = ApiResponse.builder()
+                .dateTime(System.currentTimeMillis())
+                .code(HttpStatus.FORBIDDEN.value())
+                .data("username or password invalid")
+                .build();
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(apiResponse);
+    }
 
     @ExceptionHandler(value = ServerWebInputException.class)
     public ResponseEntity<?> handleServerWebInputException(ServerWebInputException e) {

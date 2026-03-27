@@ -5,6 +5,7 @@ import com.brayanspv.auth.model.request.SignUpRequest;
 import com.brayanspv.auth.model.response.SignUpResponse;
 import com.brayanspv.auth.repositories.contracts.IUserRepository;
 import com.brayanspv.auth.repositories.entities.UserEntity;
+import com.brayanspv.auth.service.contracts.IJWTService;
 import com.google.gson.Gson;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,6 +31,8 @@ class UserServiceTest {
     private IUserRepository userRepository;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Mock
+    private IJWTService jwtService;
 
     private final Gson gson = new Gson();
 
@@ -42,9 +45,9 @@ class UserServiceTest {
         userEntity.setPassword(request.getPassword());
         userEntity.setUsername(request.getUsername());
         // Mock the save operation to return a Mono.just with an id assigned
-        when(userRepository.save(any(UserEntity.class))).thenReturn(userEntity);
+        when(userRepository.save(any(UserEntity.class))).thenReturn(Mono.just(userEntity));
 
-        UserService userService = new UserService(userRepository, passwordEncoder);
+        UserService userService = new UserService(userRepository, passwordEncoder, jwtService);
         StepVerifier.create(userService.signUp(request))
                 .expectNextMatches(signUpResponse ->  signUpResponse.getUsername().equals(request.getUsername()))
                 .verifyComplete();

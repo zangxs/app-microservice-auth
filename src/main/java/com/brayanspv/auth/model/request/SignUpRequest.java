@@ -14,7 +14,7 @@ import java.io.Serializable;
 public class SignUpRequest implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    @NotBlank(message = "cant be blank")
+    @NotBlank
     @NotNull
     private String username;
     @NotBlank

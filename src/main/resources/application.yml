@@ -3,17 +3,10 @@ spring:
     name: app-microservice-auth
   webflux:
     base-path: /app-microservice-auth
-  datasource:
-    url: jdbc:postgresql://localhost:5432/authdb
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/authdb
     username: brayanpv
     password: brayanpv
-    driver-class-name: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
 
 server:
   port: 8000
@@ -30,3 +23,7 @@ management:
   endpoint:
     health:
       show-details: always
+
+jwt:
+  secret: ${JWT_KEY:MsUEV8IkLNB7NkFB0iVHtaCNrn98CTzYIz/5w4te3J0=}
+  expiration: 86400000  # 24 horas en milisegundos
