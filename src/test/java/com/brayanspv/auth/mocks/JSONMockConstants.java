@@ -10,4 +10,12 @@ public class JSONMockConstants {
               "password":"password123"
             }
             """;
+
+    public static String LOGIN_REQUEST = """
+            {
+              "username": "daniel",
+              "password": "123tafur"
+            }
+            
+            """;
 }

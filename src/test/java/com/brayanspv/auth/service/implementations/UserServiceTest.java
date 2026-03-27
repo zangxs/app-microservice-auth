@@ -1,6 +1,7 @@
 package com.brayanspv.auth.service.implementations;
 
 import com.brayanspv.auth.mocks.JSONMockConstants;
+import com.brayanspv.auth.model.request.LoginRequest;
 import com.brayanspv.auth.model.request.SignUpRequest;
 import com.brayanspv.auth.model.response.SignUpResponse;
 import com.brayanspv.auth.repositories.contracts.IUserRepository;
@@ -18,6 +19,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+
+import java.util.Objects;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -50,6 +53,25 @@ class UserServiceTest {
         UserService userService = new UserService(userRepository, passwordEncoder, jwtService);
         StepVerifier.create(userService.signUp(request))
                 .expectNextMatches(signUpResponse ->  signUpResponse.getUsername().equals(request.getUsername()))
+                .verifyComplete();
+    }
+
+    @Test
+    void loginTestOk() {
+        LoginRequest request = gson.fromJson(JSONMockConstants.LOGIN_REQUEST, LoginRequest.class);
+
+        UserEntity userEntity = new UserEntity();
+        userEntity.setPassword(request.getPassword());
+        userEntity.setUsername(request.getUsername());
+        // Mock the save operation to return a Mono.just with an id assigned
+        when(userRepository.findByUsername(request.getUsername())).thenReturn(Mono.just(userEntity));
+        //mock
+        when(passwordEncoder.matches(request.getPassword(), request.getPassword())).thenReturn(true);
+        when(jwtService.generateToken(userEntity)).thenReturn("fake-jwt-token"); // ← esto faltaba
+
+        UserService userService = new UserService(userRepository, passwordEncoder, jwtService);
+        StepVerifier.create(userService.login(request))
+                .expectNextMatches(loginResponse -> Objects.nonNull(loginResponse.getJwtToken()))
                 .verifyComplete();
     }
 }
