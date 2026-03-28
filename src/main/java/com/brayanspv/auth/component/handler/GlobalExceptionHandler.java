@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.server.ServerWebInputException;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +27,7 @@ public class GlobalExceptionHandler {
         log.error("error in handler handleDataIntegrityViolationException: {}", e.getMessage());
         
         ApiResponse apiResponse = ApiResponse.builder()
-                .dateTime(System.currentTimeMillis())
+                .dateTime(LocalDateTime.now(ZoneOffset.UTC))
                 .code(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .data("DataIntegrityViolationException")
                 .build();
@@ -37,7 +39,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<?> handleInvalidLoginException(InvalidLoginException e) {
         log.error("error in handler handleInvalidLoginException: {}", e.getMessage());
         ApiResponse apiResponse = ApiResponse.builder()
-                .dateTime(System.currentTimeMillis())
+                .dateTime(LocalDateTime.now(ZoneOffset.UTC))
                 .code(HttpStatus.FORBIDDEN.value())
                 .data("username or password invalid")
                 .build();
@@ -54,7 +56,7 @@ public class GlobalExceptionHandler {
         Map<String, Object> errorData = Map.of("errors", errors);
 
         ApiResponse apiResponse = ApiResponse.builder()
-                .dateTime(System.currentTimeMillis())
+                .dateTime(LocalDateTime.now(ZoneOffset.UTC))
                 .code(HttpStatus.BAD_REQUEST.value())
                 .data(errorData)
                 .build();
