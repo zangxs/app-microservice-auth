@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Date;
 
 @RestController
@@ -33,7 +35,7 @@ public class UserController implements IUserController {
         log.info("request received: {}", request.toString());
         return userService.signUp(request)
                 .map(signUpResponse -> ResponseEntity.ok(ApiResponse.builder()
-                        .dateTime(System.currentTimeMillis())
+                        .dateTime(LocalDateTime.now(ZoneOffset.UTC))
                         .code(200)
                         .data(signUpResponse).build())
                 )
@@ -45,7 +47,7 @@ public class UserController implements IUserController {
     public Mono<ResponseEntity<ApiResponse>> login(@RequestBody @Valid LoginRequest request) {
         return userService.login(request)
                 .map(loginResponse -> ResponseEntity.ok(ApiResponse.builder()
-                        .dateTime(System.currentTimeMillis())
+                        .dateTime(LocalDateTime.now(ZoneOffset.UTC))
                         .code(200)
                         .data(loginResponse).build())
                 )
