@@ -4,9 +4,9 @@ spring:
   webflux:
     base-path: /app-microservice-auth
   r2dbc:
-    url: r2dbc:postgresql://localhost:5432/authdb
-    username: brayanpv
-    password: brayanpv
+    url: r2dbc:postgresql://${DB_AUTH_HOST:localhost}:${DB_AUTH_PORT:5432}/${DB_AUTH_NAME:authdb}
+    username: ${DB_AUTH_USER:brayanpv}
+    password: ${DB_AUTH_PASSWORD:brayanpv}
 
 server:
   port: 8000
@@ -25,5 +25,5 @@ management:
       show-details: always
 
 jwt:
-  secret: ${JWT_KEY:MsUEV8IkLNB7NkFB0iVHtaCNrn98CTzYIz/5w4te3J0=}
-  expiration: 86400000  # 24 horas en milisegundos
+  secret: ${JWT_KEY:}
+  expiration: ${JWT_EXPIRATION:86400000}
