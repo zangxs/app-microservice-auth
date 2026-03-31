@@ -2,11 +2,9 @@ package com.brayanspv.auth.service.implementations;
 
 import com.brayanspv.auth.component.exception.InvalidEmailException;
 import com.brayanspv.auth.component.exception.InvalidLoginException;
-import com.brayanspv.auth.component.exception.SendEmailException;
 import com.brayanspv.auth.model.request.*;
 import com.brayanspv.auth.model.response.GenericResponse;
 import com.brayanspv.auth.model.response.LoginResponse;
-import com.brayanspv.auth.model.response.SendEmailResponse;
 import com.brayanspv.auth.model.response.SignUpResponse;
 import com.brayanspv.auth.repositories.contracts.IPasswordResetTokenRepository;
 import com.brayanspv.auth.repositories.contracts.IUserRepository;
@@ -90,11 +88,40 @@ public class UserService implements IUserService {
 
     @Override
     public Mono<GenericResponse> verifyCode(VerifyCodeRequest request) {
-        return null;
+        return userRepository.findByEmail(request.email())
+                .switchIfEmpty(Mono.error(new InvalidEmailException("error invalid email")))
+                .flatMap(userEntity -> passwordResetTokenRepository.findByUserIdAndCode(userEntity.getId(), request.code())
+                        .switchIfEmpty(Mono.error(new RuntimeException("code invalid: " + request.code() + " userId: " + userEntity.getId())))
+                        .flatMap(passwordResetToken -> {
+                            if (passwordResetToken.isUsed()) {
+                                return Mono.error(new RuntimeException("token invalid"));
+                            }
+                            if (LocalDateTime.now(ZoneOffset.UTC).isAfter(passwordResetToken.getExpiresAt())) {
+                                return Mono.error(new RuntimeException("token expired"));
+                            }
+                            passwordResetToken.setUsed(true);
+                            return passwordResetTokenRepository.save(passwordResetToken)
+                                    .thenReturn(new GenericResponse("code verified successfully"));
+                        }));
     }
 
     @Override
     public Mono<GenericResponse> resetPassword(ResetPasswordRequest request) {
-        return null;
+        return userRepository.findByEmail(request.email())
+                .switchIfEmpty(Mono.error(new InvalidEmailException("error invalid email")))
+                .flatMap(userEntity -> passwordResetTokenRepository.findByUserIdAndCode(userEntity.getId(), request.code())
+                        .switchIfEmpty(Mono.error(new RuntimeException("code invalid: " + request.code() + " userId: " + userEntity.getId())))
+                        .flatMap(passwordResetToken -> {
+                            if (!passwordResetToken.isUsed()) {
+                                return Mono.error(new RuntimeException("code not verified, please verify the code first"));
+                            }
+                            if (LocalDateTime.now(ZoneOffset.UTC).isAfter(passwordResetToken.getExpiresAt())) {
+                                return Mono.error(new RuntimeException("token expired"));
+                            }
+                            userEntity.setPassword(encoder.encode(request.password()));
+                            return userRepository.save(userEntity)
+                                    .then(passwordResetTokenRepository.delete(passwordResetToken))
+                                    .thenReturn(new GenericResponse("password reset successfully"));
+                        }));
     }
 }

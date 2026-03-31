@@ -4,7 +4,9 @@ import com.brayanspv.auth.component.exception.InvalidLoginException;
 import com.brayanspv.auth.mocks.JSONMockConstants;
 import com.brayanspv.auth.model.request.ForgotPasswordRequest;
 import com.brayanspv.auth.model.request.LoginRequest;
+import com.brayanspv.auth.model.request.ResetPasswordRequest;
 import com.brayanspv.auth.model.request.SignUpRequest;
+import com.brayanspv.auth.model.request.VerifyCodeRequest;
 import com.brayanspv.auth.model.response.GenericResponse;
 import com.brayanspv.auth.model.response.LoginResponse;
 import com.brayanspv.auth.model.response.SendEmailResponse;
@@ -24,6 +26,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Objects;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -143,6 +147,197 @@ class UserServiceTest {
         UserService userService = new UserService(userRepository, passwordEncoder, jwtService, mailService, passwordResetTokenRepository);
         StepVerifier.create(userService.forgotPassword(request))
                 .expectErrorMatches(error -> error.getMessage().contains("error invalid email"))
+                .verify();
+    }
+
+    @Test
+    void verifyCode_success() {
+        VerifyCodeRequest request = gson.fromJson(JSONMockConstants.VERIFY_CODE_REQUEST, VerifyCodeRequest.class);
+        UserEntity userEntity = new UserEntity();
+        userEntity.setId(1L);
+        userEntity.setEmail(request.email());
+
+        PasswordResetToken token = new PasswordResetToken();
+        token.setId(java.util.UUID.randomUUID());
+        token.setUserId(1L);
+        token.setCode(request.code());
+        token.setUsed(false);
+        token.setExpiresAt(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(10));
+
+        when(userRepository.findByEmail(request.email())).thenReturn(Mono.just(userEntity));
+        when(passwordResetTokenRepository.findByUserIdAndCode(userEntity.getId(), request.code())).thenReturn(Mono.just(token));
+        when(passwordResetTokenRepository.save(any())).thenReturn(Mono.just(token));
+
+        UserService userService = new UserService(userRepository, passwordEncoder, jwtService, mailService, passwordResetTokenRepository);
+        StepVerifier.create(userService.verifyCode(request))
+                .expectNextMatches(response -> response.message().contains("code verified successfully"))
+                .verifyComplete();
+    }
+
+    @Test
+    void verifyCode_userNotFound() {
+        VerifyCodeRequest request = gson.fromJson(JSONMockConstants.VERIFY_CODE_REQUEST, VerifyCodeRequest.class);
+        when(userRepository.findByEmail(request.email())).thenReturn(Mono.empty());
+
+        UserService userService = new UserService(userRepository, passwordEncoder, jwtService, mailService, passwordResetTokenRepository);
+        StepVerifier.create(userService.verifyCode(request))
+                .expectErrorMatches(error -> error.getMessage().contains("error invalid email"))
+                .verify();
+    }
+
+    @Test
+    void verifyCode_codeNotFound() {
+        VerifyCodeRequest request = gson.fromJson(JSONMockConstants.VERIFY_CODE_REQUEST, VerifyCodeRequest.class);
+        UserEntity userEntity = new UserEntity();
+        userEntity.setId(1L);
+
+        when(userRepository.findByEmail(request.email())).thenReturn(Mono.just(userEntity));
+        when(passwordResetTokenRepository.findByUserIdAndCode(userEntity.getId(), request.code())).thenReturn(Mono.empty());
+
+        UserService userService = new UserService(userRepository, passwordEncoder, jwtService, mailService, passwordResetTokenRepository);
+        StepVerifier.create(userService.verifyCode(request))
+                .expectErrorMatches(error -> error.getMessage().contains("code invalid"))
+                .verify();
+    }
+
+    @Test
+    void verifyCode_tokenAlreadyUsed() {
+        VerifyCodeRequest request = gson.fromJson(JSONMockConstants.VERIFY_CODE_REQUEST, VerifyCodeRequest.class);
+        UserEntity userEntity = new UserEntity();
+        userEntity.setId(1L);
+
+        PasswordResetToken token = new PasswordResetToken();
+        token.setId(java.util.UUID.randomUUID());
+        token.setUserId(1L);
+        token.setCode(request.code());
+        token.setUsed(true);
+        token.setExpiresAt(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(10));
+
+        when(userRepository.findByEmail(request.email())).thenReturn(Mono.just(userEntity));
+        when(passwordResetTokenRepository.findByUserIdAndCode(userEntity.getId(), request.code())).thenReturn(Mono.just(token));
+
+        UserService userService = new UserService(userRepository, passwordEncoder, jwtService, mailService, passwordResetTokenRepository);
+        StepVerifier.create(userService.verifyCode(request))
+                .expectErrorMatches(error -> error.getMessage().contains("token invalid"))
+                .verify();
+    }
+
+    @Test
+    void verifyCode_tokenExpired() {
+        VerifyCodeRequest request = gson.fromJson(JSONMockConstants.VERIFY_CODE_REQUEST, VerifyCodeRequest.class);
+        UserEntity userEntity = new UserEntity();
+        userEntity.setId(1L);
+
+        PasswordResetToken token = new PasswordResetToken();
+        token.setId(java.util.UUID.randomUUID());
+        token.setUserId(1L);
+        token.setCode(request.code());
+        token.setUsed(false);
+        token.setExpiresAt(LocalDateTime.now(ZoneOffset.UTC).minusMinutes(1));
+
+        when(userRepository.findByEmail(request.email())).thenReturn(Mono.just(userEntity));
+        when(passwordResetTokenRepository.findByUserIdAndCode(userEntity.getId(), request.code())).thenReturn(Mono.just(token));
+
+        UserService userService = new UserService(userRepository, passwordEncoder, jwtService, mailService, passwordResetTokenRepository);
+        StepVerifier.create(userService.verifyCode(request))
+                .expectErrorMatches(error -> error.getMessage().contains("token expired"))
+                .verify();
+    }
+
+    @Test
+    void resetPassword_success() {
+        ResetPasswordRequest request = gson.fromJson(JSONMockConstants.RESET_PASSWORD_REQUEST, ResetPasswordRequest.class);
+        UserEntity userEntity = new UserEntity();
+        userEntity.setId(1L);
+        userEntity.setEmail(request.email());
+        userEntity.setPassword("old-password");
+
+        PasswordResetToken token = new PasswordResetToken();
+        token.setId(java.util.UUID.randomUUID());
+        token.setUserId(1L);
+        token.setCode(request.code());
+        token.setUsed(true);
+        token.setExpiresAt(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(10));
+
+        when(userRepository.findByEmail(request.email())).thenReturn(Mono.just(userEntity));
+        when(passwordResetTokenRepository.findByUserIdAndCode(userEntity.getId(), request.code())).thenReturn(Mono.just(token));
+        when(passwordEncoder.encode(request.password())).thenReturn("encoded-new-password");
+        when(userRepository.save(any(UserEntity.class))).thenReturn(Mono.just(userEntity));
+        when(passwordResetTokenRepository.delete(any(PasswordResetToken.class))).thenReturn(Mono.empty());
+
+        UserService userService = new UserService(userRepository, passwordEncoder, jwtService, mailService, passwordResetTokenRepository);
+        StepVerifier.create(userService.resetPassword(request))
+                .expectNextMatches(response -> response.message().contains("password reset successfully"))
+                .verifyComplete();
+    }
+
+    @Test
+    void resetPassword_userNotFound() {
+        ResetPasswordRequest request = gson.fromJson(JSONMockConstants.RESET_PASSWORD_REQUEST, ResetPasswordRequest.class);
+        when(userRepository.findByEmail(request.email())).thenReturn(Mono.empty());
+
+        UserService userService = new UserService(userRepository, passwordEncoder, jwtService, mailService, passwordResetTokenRepository);
+        StepVerifier.create(userService.resetPassword(request))
+                .expectErrorMatches(error -> error.getMessage().contains("error invalid email"))
+                .verify();
+    }
+
+    @Test
+    void resetPassword_codeNotFound() {
+        ResetPasswordRequest request = gson.fromJson(JSONMockConstants.RESET_PASSWORD_REQUEST, ResetPasswordRequest.class);
+        UserEntity userEntity = new UserEntity();
+        userEntity.setId(1L);
+
+        when(userRepository.findByEmail(request.email())).thenReturn(Mono.just(userEntity));
+        when(passwordResetTokenRepository.findByUserIdAndCode(userEntity.getId(), request.code())).thenReturn(Mono.empty());
+
+        UserService userService = new UserService(userRepository, passwordEncoder, jwtService, mailService, passwordResetTokenRepository);
+        StepVerifier.create(userService.resetPassword(request))
+                .expectErrorMatches(error -> error.getMessage().contains("code invalid"))
+                .verify();
+    }
+
+    @Test
+    void resetPassword_codeNotVerified() {
+        ResetPasswordRequest request = gson.fromJson(JSONMockConstants.RESET_PASSWORD_REQUEST, ResetPasswordRequest.class);
+        UserEntity userEntity = new UserEntity();
+        userEntity.setId(1L);
+
+        PasswordResetToken token = new PasswordResetToken();
+        token.setId(java.util.UUID.randomUUID());
+        token.setUserId(1L);
+        token.setCode(request.code());
+        token.setUsed(false);
+        token.setExpiresAt(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(10));
+
+        when(userRepository.findByEmail(request.email())).thenReturn(Mono.just(userEntity));
+        when(passwordResetTokenRepository.findByUserIdAndCode(userEntity.getId(), request.code())).thenReturn(Mono.just(token));
+
+        UserService userService = new UserService(userRepository, passwordEncoder, jwtService, mailService, passwordResetTokenRepository);
+        StepVerifier.create(userService.resetPassword(request))
+                .expectErrorMatches(error -> error.getMessage().contains("code not verified"))
+                .verify();
+    }
+
+    @Test
+    void resetPassword_tokenExpired() {
+        ResetPasswordRequest request = gson.fromJson(JSONMockConstants.RESET_PASSWORD_REQUEST, ResetPasswordRequest.class);
+        UserEntity userEntity = new UserEntity();
+        userEntity.setId(1L);
+
+        PasswordResetToken token = new PasswordResetToken();
+        token.setId(java.util.UUID.randomUUID());
+        token.setUserId(1L);
+        token.setCode(request.code());
+        token.setUsed(true);
+        token.setExpiresAt(LocalDateTime.now(ZoneOffset.UTC).minusMinutes(1));
+
+        when(userRepository.findByEmail(request.email())).thenReturn(Mono.just(userEntity));
+        when(passwordResetTokenRepository.findByUserIdAndCode(userEntity.getId(), request.code())).thenReturn(Mono.just(token));
+
+        UserService userService = new UserService(userRepository, passwordEncoder, jwtService, mailService, passwordResetTokenRepository);
+        StepVerifier.create(userService.resetPassword(request))
+                .expectErrorMatches(error -> error.getMessage().contains("token expired"))
                 .verify();
     }
 }

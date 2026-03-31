@@ -32,6 +32,7 @@ public class ResendMailService implements IMailService {
         String resetCode = generateResetCode();
         return Mono.fromCallable(() -> {
                     Resend resend = createResendClient();
+                    log.info("sending email from {}", emailFrom);
                     log.info("Sending email to {}", request.email());
                     String htmlContent = buildForgotPasswordHtml(request.email(), resetCode);
                     CreateEmailOptions params = CreateEmailOptions.builder()

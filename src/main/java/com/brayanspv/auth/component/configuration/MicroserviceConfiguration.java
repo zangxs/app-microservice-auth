@@ -20,6 +20,8 @@ public class MicroserviceConfiguration {
                         .pathMatchers("/signUp").permitAll()
                         .pathMatchers("/login").permitAll()
                         .pathMatchers("/forgot-password").permitAll()
+                        .pathMatchers("/reset-password").permitAll()
+                        .pathMatchers("verify-code").permitAll()
                         .anyExchange().authenticated()
                 )
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)

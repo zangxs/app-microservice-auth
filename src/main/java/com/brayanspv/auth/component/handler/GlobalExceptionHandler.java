@@ -48,6 +48,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(apiResponse);
     }
 
+    @ExceptionHandler(value = RuntimeException.class)
+    public ResponseEntity<?> handleIRuntimeException(RuntimeException e) {
+        log.error("error in handler handleIRuntimeException: {}", e.getMessage());
+        ApiResponse apiResponse = ApiResponse.builder()
+                .dateTime(LocalDateTime.now(ZoneOffset.UTC))
+                .code(HttpStatus.BAD_REQUEST.value())
+                .data(e.getMessage())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(apiResponse);
+    }
+
     @ExceptionHandler(value = InvalidEmailException.class)
     public ResponseEntity<?> handleInvalidEmailException(InvalidEmailException e) {
         log.error("error in handler handleInvalidEmailException: {}", e.getMessage());

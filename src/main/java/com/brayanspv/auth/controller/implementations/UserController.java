@@ -64,12 +64,26 @@ public class UserController implements IUserController {
     }
 
     @Override
-    public Mono<ResponseEntity<ApiResponse>> verifyCode(VerifyCodeRequest request) {
-        return null;
+    @PostMapping(path = "verify-code")
+    public Mono<ResponseEntity<ApiResponse>> verifyCode(@RequestBody VerifyCodeRequest request) {
+        return userService.verifyCode(request)
+                .map(response -> ResponseEntity.ok(ApiResponse.builder()
+                        .dateTime(LocalDateTime.now(ZoneOffset.UTC))
+                        .code(200)
+                        .data(response)
+                        .build()))
+                .onErrorResume(Mono::error).log();
     }
 
     @Override
-    public Mono<ResponseEntity<ApiResponse>> resetPassword(ResetPasswordRequest request) {
-        return null;
+    @PostMapping(path = "reset-password")
+    public Mono<ResponseEntity<ApiResponse>> resetPassword(@RequestBody ResetPasswordRequest request) {
+        return userService.resetPassword(request)
+                .map(response -> ResponseEntity.ok(ApiResponse.builder()
+                        .dateTime(LocalDateTime.now(ZoneOffset.UTC))
+                        .code(200)
+                        .data(response)
+                        .build()))
+                .onErrorResume(Mono::error).log();
     }
 }
