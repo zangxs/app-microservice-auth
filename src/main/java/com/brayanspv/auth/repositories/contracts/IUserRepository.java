@@ -10,4 +10,5 @@ import java.util.Optional;
 @Repository
 public interface IUserRepository extends ReactiveCrudRepository<UserEntity, Long> {
     Mono<UserEntity> findByUsername(String username);
+    Mono<UserEntity> findByEmail(String email);
 }

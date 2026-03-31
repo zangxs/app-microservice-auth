@@ -1,5 +1,6 @@
 package com.brayanspv.auth.component.handler;
 
+import com.brayanspv.auth.component.exception.InvalidEmailException;
 import com.brayanspv.auth.component.exception.InvalidLoginException;
 import com.brayanspv.auth.model.response.generic.ApiResponse;
 import lombok.extern.log4j.Log4j2;
@@ -45,6 +46,18 @@ public class GlobalExceptionHandler {
                 .build();
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(apiResponse);
+    }
+
+    @ExceptionHandler(value = InvalidEmailException.class)
+    public ResponseEntity<?> handleInvalidEmailException(InvalidEmailException e) {
+        log.error("error in handler handleInvalidEmailException: {}", e.getMessage());
+        ApiResponse apiResponse = ApiResponse.builder()
+                .dateTime(LocalDateTime.now(ZoneOffset.UTC))
+                .code(HttpStatus.FORBIDDEN.value())
+                .data("email not found")
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(apiResponse);
     }
 
     @ExceptionHandler(value = ServerWebInputException.class)

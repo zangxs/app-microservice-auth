@@ -19,6 +19,7 @@ public class MicroserviceConfiguration {
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers("/signUp").permitAll()
                         .pathMatchers("/login").permitAll()
+                        .pathMatchers("/forgot-password").permitAll()
                         .anyExchange().authenticated()
                 )
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)

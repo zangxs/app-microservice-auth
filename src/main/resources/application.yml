@@ -31,4 +31,4 @@ jwt:
 
 resend:
   api-key: ${RESEND_KEY:}
-  expiration: ${JWT_EXPIRATION:86400000}
+  email: ${RESEND_EMAIL:}

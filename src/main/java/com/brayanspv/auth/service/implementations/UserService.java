@@ -1,11 +1,16 @@
 package com.brayanspv.auth.service.implementations;
 
+import com.brayanspv.auth.component.exception.InvalidEmailException;
 import com.brayanspv.auth.component.exception.InvalidLoginException;
+import com.brayanspv.auth.component.exception.SendEmailException;
 import com.brayanspv.auth.model.request.*;
 import com.brayanspv.auth.model.response.GenericResponse;
 import com.brayanspv.auth.model.response.LoginResponse;
+import com.brayanspv.auth.model.response.SendEmailResponse;
 import com.brayanspv.auth.model.response.SignUpResponse;
+import com.brayanspv.auth.repositories.contracts.IPasswordResetTokenRepository;
 import com.brayanspv.auth.repositories.contracts.IUserRepository;
+import com.brayanspv.auth.repositories.entities.PasswordResetToken;
 import com.brayanspv.auth.repositories.entities.UserEntity;
 import com.brayanspv.auth.service.contracts.IJWTService;
 import com.brayanspv.auth.service.contracts.IMailService;
@@ -15,6 +20,9 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 
 @Service
@@ -26,6 +34,7 @@ public class UserService implements IUserService {
     private final PasswordEncoder encoder;
     private final IJWTService jwtService;
     private final IMailService mailService;
+    private final IPasswordResetTokenRepository passwordResetTokenRepository;
 
     @Override
     public Mono<SignUpResponse> signUp(SignUpRequest request) {
@@ -64,14 +73,19 @@ public class UserService implements IUserService {
 
     @Override
     public Mono<GenericResponse> forgotPassword(ForgotPasswordRequest request) {
-        EmailRequest emailRequest = new EmailRequest(
-                "noreply@auth.com",
-                request.email(),
-                "Password Reset Request",
-                "Your password reset code is: 123456"
-        );
-        return mailService.sendEmail(emailRequest)
-                .map(id -> new GenericResponse("Email sent successfully with id: " + id));
+        return userRepository.findByEmail(request.email())
+                .switchIfEmpty(Mono.error(new InvalidEmailException("error invalid email")))
+                .flatMap(userEntity -> mailService.sendEmail(request)
+                        .flatMap(sendEmailResponse -> {
+                            PasswordResetToken passwordResetToken = new PasswordResetToken();
+                            passwordResetToken.setUsed(false);
+                            passwordResetToken.setUserId(userEntity.getId());
+                            passwordResetToken.setCode(sendEmailResponse.code());
+                            passwordResetToken.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC));
+                            passwordResetToken.setExpiresAt(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(15));
+                            return passwordResetTokenRepository.save(passwordResetToken)
+                                    .thenReturn(new GenericResponse("Email sent successfully with id: " + sendEmailResponse.id()));
+                        }));
     }
 
     @Override

@@ -167,6 +167,6 @@ CREATE TABLE password_reset_token (
 );
 ```
 - Endpoints:
-- POST /auth/forgot-password   → recibe email, genera código, envía email
-- POST /auth/verify-code       → recibe email + código, valida
-- POST /auth/reset-password    → recibe email + código + nueva contraseña
+- POST /forgot-password   → recibe email, genera código, envía email
+- POST /verify-code       → recibe email + código, valida
+- POST /reset-password    → recibe email + código + nueva contraseña

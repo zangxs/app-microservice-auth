@@ -52,7 +52,8 @@ public class UserController implements IUserController {
     }
 
     @Override
-    public Mono<ResponseEntity<ApiResponse>> forgotPassword(ForgotPasswordRequest request) {
+    @PostMapping(path = "forgot-password")
+    public Mono<ResponseEntity<ApiResponse>> forgotPassword(@RequestBody ForgotPasswordRequest request) {
         return userService.forgotPassword(request)
                 .map(response -> ResponseEntity.ok(ApiResponse.builder()
                         .dateTime(LocalDateTime.now(ZoneOffset.UTC))
