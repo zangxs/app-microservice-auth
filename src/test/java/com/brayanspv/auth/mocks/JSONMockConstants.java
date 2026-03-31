@@ -18,4 +18,25 @@ public class JSONMockConstants {
             }
             
             """;
+
+    public static String FORGOT_PASSWORD_REQUEST = """
+            {
+              "email": "user@example.com"
+            }
+            """;
+
+    public static String VERIFY_CODE_REQUEST = """
+            {
+              "email": "user@example.com",
+              "code": "123456"
+            }
+            """;
+
+    public static String RESET_PASSWORD_REQUEST = """
+            {
+              "email": "user@example.com",
+              "code": "123456",
+              "newPassword": "newPassword123"
+            }
+            """;
 }

@@ -28,3 +28,7 @@ management:
 jwt:
   secret: ${JWT_KEY:}
   expiration: ${JWT_EXPIRATION:86400000}
+
+resend:
+  api-key: ${RESEND_KEY:}
+  expiration: ${JWT_EXPIRATION:86400000}
