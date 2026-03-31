@@ -1,34 +1,38 @@
 package com.brayanspv.auth.service.implementations;
 
+import com.brayanspv.auth.component.exception.InvalidEmailException;
 import com.brayanspv.auth.component.exception.InvalidLoginException;
-import com.brayanspv.auth.model.request.LoginRequest;
-import com.brayanspv.auth.model.request.SignUpRequest;
+import com.brayanspv.auth.model.request.*;
+import com.brayanspv.auth.model.response.GenericResponse;
 import com.brayanspv.auth.model.response.LoginResponse;
 import com.brayanspv.auth.model.response.SignUpResponse;
+import com.brayanspv.auth.repositories.contracts.IPasswordResetTokenRepository;
 import com.brayanspv.auth.repositories.contracts.IUserRepository;
+import com.brayanspv.auth.repositories.entities.PasswordResetToken;
 import com.brayanspv.auth.repositories.entities.UserEntity;
 import com.brayanspv.auth.service.contracts.IJWTService;
+import com.brayanspv.auth.service.contracts.IMailService;
 import com.brayanspv.auth.service.contracts.IUserService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
-import java.util.Optional;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+
 
 @Service
 @Log4j2
+@RequiredArgsConstructor
 public class UserService implements IUserService {
 
     private final IUserRepository userRepository;
     private final PasswordEncoder encoder;
     private final IJWTService jwtService;
-    public UserService(IUserRepository userRepository, PasswordEncoder encoder, IJWTService jwtService) {
-        this.userRepository = userRepository;
-        this.encoder = encoder;
-        this.jwtService = jwtService;
-    }
+    private final IMailService mailService;
+    private final IPasswordResetTokenRepository passwordResetTokenRepository;
 
     @Override
     public Mono<SignUpResponse> signUp(SignUpRequest request) {
@@ -63,5 +67,61 @@ public class UserService implements IUserService {
                     String token = jwtService.generateToken(userEntity);
                     return Mono.just(new LoginResponse(token));
                 });
+    }
+
+    @Override
+    public Mono<GenericResponse> forgotPassword(ForgotPasswordRequest request) {
+        return userRepository.findByEmail(request.email())
+                .switchIfEmpty(Mono.error(new InvalidEmailException("error invalid email")))
+                .flatMap(userEntity -> mailService.sendEmail(request)
+                        .flatMap(sendEmailResponse -> {
+                            PasswordResetToken passwordResetToken = new PasswordResetToken();
+                            passwordResetToken.setUsed(false);
+                            passwordResetToken.setUserId(userEntity.getId());
+                            passwordResetToken.setCode(sendEmailResponse.code());
+                            passwordResetToken.setCreatedAt(LocalDateTime.now(ZoneOffset.UTC));
+                            passwordResetToken.setExpiresAt(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(15));
+                            return passwordResetTokenRepository.save(passwordResetToken)
+                                    .thenReturn(new GenericResponse("Email sent successfully with id: " + sendEmailResponse.id()));
+                        }));
+    }
+
+    @Override
+    public Mono<GenericResponse> verifyCode(VerifyCodeRequest request) {
+        return userRepository.findByEmail(request.email())
+                .switchIfEmpty(Mono.error(new InvalidEmailException("error invalid email")))
+                .flatMap(userEntity -> passwordResetTokenRepository.findByUserIdAndCode(userEntity.getId(), request.code())
+                        .switchIfEmpty(Mono.error(new RuntimeException("code invalid: " + request.code() + " userId: " + userEntity.getId())))
+                        .flatMap(passwordResetToken -> {
+                            if (passwordResetToken.isUsed()) {
+                                return Mono.error(new RuntimeException("token invalid"));
+                            }
+                            if (LocalDateTime.now(ZoneOffset.UTC).isAfter(passwordResetToken.getExpiresAt())) {
+                                return Mono.error(new RuntimeException("token expired"));
+                            }
+                            passwordResetToken.setUsed(true);
+                            return passwordResetTokenRepository.save(passwordResetToken)
+                                    .thenReturn(new GenericResponse("code verified successfully"));
+                        }));
+    }
+
+    @Override
+    public Mono<GenericResponse> resetPassword(ResetPasswordRequest request) {
+        return userRepository.findByEmail(request.email())
+                .switchIfEmpty(Mono.error(new InvalidEmailException("error invalid email")))
+                .flatMap(userEntity -> passwordResetTokenRepository.findByUserIdAndCode(userEntity.getId(), request.code())
+                        .switchIfEmpty(Mono.error(new RuntimeException("code invalid: " + request.code() + " userId: " + userEntity.getId())))
+                        .flatMap(passwordResetToken -> {
+                            if (!passwordResetToken.isUsed()) {
+                                return Mono.error(new RuntimeException("code not verified, please verify the code first"));
+                            }
+                            if (LocalDateTime.now(ZoneOffset.UTC).isAfter(passwordResetToken.getExpiresAt())) {
+                                return Mono.error(new RuntimeException("token expired"));
+                            }
+                            userEntity.setPassword(encoder.encode(request.password()));
+                            return userRepository.save(userEntity)
+                                    .then(passwordResetTokenRepository.delete(passwordResetToken))
+                                    .thenReturn(new GenericResponse("password reset successfully"));
+                        }));
     }
 }

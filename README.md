@@ -140,3 +140,33 @@ CREATE TABLE IF NOT EXISTS au_user (
 - Las contraseñas se almacenan hasheadas con BCrypt
 - El token JWT tiene una expiración de 24 horas (86400000 ms)
 - Para producción, nunca dejes `JWT_KEY` con valor por defecto
+
+### Forgot password
+```
+Usuario ingresa su email
+↓
+Auth Service genera código de 6 dígitos
+lo guarda en BD con expiración de 15 minutos
+↓
+Resend envía el email con el código
+↓
+Usuario ingresa el código en el frontend
+↓
+Auth Service valida el código
+Si válido → permite cambiar la contraseña
+```
+
+```sql
+CREATE TABLE password_reset_token (
+                                      id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                                      user_id     BIGINT NOT NULL,
+                                      code        VARCHAR(6) NOT NULL,
+                                      used        BOOLEAN NOT NULL DEFAULT FALSE,
+                                      expires_at  TIMESTAMP NOT NULL,
+                                      created_at  TIMESTAMP NOT NULL DEFAULT now()
+);
+```
+- Endpoints:
+- POST /forgot-password   → recibe email, genera código, envía email
+- POST /verify-code       → recibe email + código, valida
+- POST /reset-password    → recibe email + código + nueva contraseña

@@ -1,8 +1,7 @@
 package com.brayanspv.auth.controller.implementations;
 
 import com.brayanspv.auth.controller.contracts.IUserController;
-import com.brayanspv.auth.model.request.LoginRequest;
-import com.brayanspv.auth.model.request.SignUpRequest;
+import com.brayanspv.auth.model.request.*;
 import com.brayanspv.auth.model.response.LoginResponse;
 import com.brayanspv.auth.model.response.SignUpResponse;
 import com.brayanspv.auth.model.response.generic.ApiResponse;
@@ -37,20 +36,54 @@ public class UserController implements IUserController {
                 .map(signUpResponse -> ResponseEntity.ok(ApiResponse.builder()
                         .dateTime(LocalDateTime.now(ZoneOffset.UTC))
                         .code(200)
-                        .data(signUpResponse).build())
-                )
+                        .data(signUpResponse).build()))
                 .onErrorResume(Mono::error);
     }
 
     @Override
     @PostMapping(path = "login")
     public Mono<ResponseEntity<ApiResponse>> login(@RequestBody @Valid LoginRequest request) {
-        return userService.login(request)
-                .map(loginResponse -> ResponseEntity.ok(ApiResponse.builder()
+        return userService.login(request).map(loginResponse -> ResponseEntity.ok(ApiResponse.builder()
                         .dateTime(LocalDateTime.now(ZoneOffset.UTC))
                         .code(200)
-                        .data(loginResponse).build())
-                )
+                        .data(loginResponse)
+                        .build()))
+                .onErrorResume(Mono::error).log();
+    }
+
+    @Override
+    @PostMapping(path = "forgot-password")
+    public Mono<ResponseEntity<ApiResponse>> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        return userService.forgotPassword(request)
+                .map(response -> ResponseEntity.ok(ApiResponse.builder()
+                        .dateTime(LocalDateTime.now(ZoneOffset.UTC))
+                        .code(200)
+                        .data(response)
+                        .build()))
+                .onErrorResume(Mono::error).log();
+    }
+
+    @Override
+    @PostMapping(path = "verify-code")
+    public Mono<ResponseEntity<ApiResponse>> verifyCode(@RequestBody VerifyCodeRequest request) {
+        return userService.verifyCode(request)
+                .map(response -> ResponseEntity.ok(ApiResponse.builder()
+                        .dateTime(LocalDateTime.now(ZoneOffset.UTC))
+                        .code(200)
+                        .data(response)
+                        .build()))
+                .onErrorResume(Mono::error).log();
+    }
+
+    @Override
+    @PostMapping(path = "reset-password")
+    public Mono<ResponseEntity<ApiResponse>> resetPassword(@RequestBody ResetPasswordRequest request) {
+        return userService.resetPassword(request)
+                .map(response -> ResponseEntity.ok(ApiResponse.builder()
+                        .dateTime(LocalDateTime.now(ZoneOffset.UTC))
+                        .code(200)
+                        .data(response)
+                        .build()))
                 .onErrorResume(Mono::error).log();
     }
 }
