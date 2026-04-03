@@ -22,6 +22,7 @@ public class MicroserviceConfiguration {
                         .pathMatchers("/forgot-password").permitAll()
                         .pathMatchers("/reset-password").permitAll()
                         .pathMatchers("verify-code").permitAll()
+                        .pathMatchers("/actuator/**").permitAll()
                         .anyExchange().authenticated()
                 )
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
