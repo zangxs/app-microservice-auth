@@ -52,10 +52,21 @@ jobs:
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
             ./ ${{ env.EC2_USER }}@${{ env.EC2_HOST }}:${{ env.DEPLOY_PATH }}/app-microservice-auth/
 
+      - name: Ensure infrastructure exists on EC2
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ env.EC2_USER }}@${{ env.EC2_HOST }} "
+            mkdir -p ${{ env.DEPLOY_PATH }}/infrastructure &&
+            if [ ! -f ${{ env.DEPLOY_PATH }}/infrastructure/.env ]; then
+              echo 'ERROR: .env file not found on EC2. Upload it manually first.' &&
+              exit 1
+            fi &&
+            ls -la ${{ env.DEPLOY_PATH }}/infrastructure/
+          "
+
       - name: Deploy auth-service
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ env.EC2_USER }}@${{ env.EC2_HOST }} "cd ${{ env.DEPLOY_PATH }}/infrastructure && docker compose -f docker-compose.yml up -d --build auth-service && docker image prune -f"
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ env.EC2_USER }}@${{ env.EC2_HOST }} "docker compose -f ${{ env.DEPLOY_PATH }}/infrastructure/docker-compose.yml --env-file ${{ env.DEPLOY_PATH }}/infrastructure/.env up -d --build auth-service && docker image prune -f"
 
       - name: Verify deployment
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ env.EC2_USER }}@${{ env.EC2_HOST }} "cd ${{ env.DEPLOY_PATH }}/infrastructure && docker compose -f docker-compose.yml ps auth-service"
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ env.EC2_USER }}@${{ env.EC2_HOST }} "docker compose -f ${{ env.DEPLOY_PATH }}/infrastructure/docker-compose.yml --env-file ${{ env.DEPLOY_PATH }}/infrastructure/.env ps auth-service"
