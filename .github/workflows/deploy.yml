@@ -54,15 +54,8 @@ jobs:
 
       - name: Deploy auth-service
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ env.EC2_USER }}@${{ env.EC2_HOST }} << 'EOF'
-            cd ${{ env.DEPLOY_PATH }}/infrastructure
-            docker compose up -d --build auth-service
-            docker image prune -f
-          EOF
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ env.EC2_USER }}@${{ env.EC2_HOST }} "cd ${{ env.DEPLOY_PATH }}/infrastructure && docker compose -f docker-compose.yml up -d --build auth-service && docker image prune -f"
 
       - name: Verify deployment
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ env.EC2_USER }}@${{ env.EC2_HOST }} << 'EOF'
-            cd ${{ env.DEPLOY_PATH }}/infrastructure
-            docker compose ps auth-service
-          EOF
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ env.EC2_USER }}@${{ env.EC2_HOST }} "cd ${{ env.DEPLOY_PATH }}/infrastructure && docker compose -f docker-compose.yml ps auth-service"
