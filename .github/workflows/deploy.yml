@@ -42,15 +42,15 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
 
-      - name: Upload project to EC2
+      - name: Upload auth-service to EC2
         run: |
           rsync -avz --delete \
             --exclude 'node_modules' \
             --exclude 'target' \
             --exclude '.git' \
-            --exclude 'infrastructure/.env' \
+            --exclude '.github' \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
-            ./ ${{ env.EC2_USER }}@${{ env.EC2_HOST }}:${{ env.DEPLOY_PATH }}/
+            ./ ${{ env.EC2_USER }}@${{ env.EC2_HOST }}:${{ env.DEPLOY_PATH }}/app-microservice-auth/
 
       - name: Deploy auth-service
         run: |
