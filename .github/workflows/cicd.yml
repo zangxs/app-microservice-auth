@@ -8,8 +8,6 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    env:
-      KEY_VALUE: ${{ secrets.KEY_VALUE }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
