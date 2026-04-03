@@ -27,12 +27,18 @@ public class CorsConfig {
             // Obtén el origen de la petición
             String origin = exchange.getRequest().getHeaders().getOrigin();
 
-            // Lista de orígenes permitidos
-            List<String> allowedOrigins = Arrays.asList(
-                    "http://localhost:5173",
-                    "http://brayan-b550m-ds3h-ac.tailbfab80.ts.net:5173",
-                    "http://100.105.171.120:5173"
-            );
+            // Lista de orígenes permitidos (desde variable de entorno o defaults)
+            String allowedOriginsEnv = System.getenv("ALLOWED_ORIGINS");
+            List<String> allowedOrigins;
+            if (allowedOriginsEnv != null && !allowedOriginsEnv.isEmpty()) {
+                allowedOrigins = Arrays.asList(allowedOriginsEnv.split(","));
+            } else {
+                allowedOrigins = Arrays.asList(
+                        "http://localhost:5173",
+                        "http://brayan-b550m-ds3h-ac.tailbfab80.ts.net:5173",
+                        "http://100.105.171.120:5173"
+                );
+            }
 
             // Si el origen está permitido, agrega el header
             if (origin != null && allowedOrigins.contains(origin)) {
