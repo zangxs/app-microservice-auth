@@ -25,15 +25,8 @@ jobs:
           java-version: '17'
           cache: maven
 
-      - name: Install common-dto-library
-        run: |
-          cd common-dto-library
-          mvn clean install -DskipTests
-
       - name: Build & Test Auth Service
-        run: |
-          cd app-microservice-auth
-          mvn clean test
+        run: mvn clean test
 
   deploy:
     name: Deploy Auth to EC2
